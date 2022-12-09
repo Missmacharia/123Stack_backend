@@ -6,6 +6,9 @@ CREATE TABLE users
     password VARCHAR(50) NOT NULL
 )
 
+alter table users
+alter column password varchar (500) not null
+
 INSERT INTO dbo.users
 (id, username, email, password)
 VALUES

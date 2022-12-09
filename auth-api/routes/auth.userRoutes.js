@@ -3,8 +3,8 @@ const { signInController, loginUserController } = require('../controller/auth-co
 
 const router = express.Router()
 
-router.post("/", signInController)
-// router.post("/", loginUserController)
+router.post("/signin", signInController)
+router.post("/login", loginUserController)
 
 
 module.exports= router

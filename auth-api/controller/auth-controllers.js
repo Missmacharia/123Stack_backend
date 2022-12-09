@@ -12,7 +12,7 @@ const signInController= async (req, res)=>{
         const { error } =signinSchema.validate(req.body) 
         if(error){
             return res.status(400).json({
-                error: error.message
+                message: "re-enter credentials"
             })
         }
 
@@ -22,30 +22,24 @@ const signInController= async (req, res)=>{
         const pool = await mssql.connect(sqlConfig)
         const id = userId()
         //generates a salt
-        // const salt = await bcrypt.genSalt(10)
-        // const password=await bcrypt.hash(salt, req.body.password)
-        const password = await bcrypt.hash(req.body.password, 10)
-        await pool
-        .request()
-        .input('id', mssql.VarChar, id)
-        .input('username', mssql.VarChar, username)
+        const salt = await bcrypt.genSalt(10)
+        const password=await bcrypt.hash( req.body.password,salt)
+        // const password = await bcrypt.hash(req.body.password, 10)
+        let signinResult = await (await pool
+       .request()
+       .input('id', mssql.VarChar, id)
+       .input('username', mssql.VarChar, username)
         .input('email', mssql.VarChar, email)
         .input('password', mssql.VarChar, password)
-        .execute("signInuser")
-        //finds if user exists
-        if (user.email=== email) {
-            return res.status(401).json({
-                message:('user already exists')
-            })
-        }else {
-            return res.status(200).json({
-                message: ('user signed in sucessfully')
-            })
-        }
+        .execute("signInuser")).rowsAffected
+        console.log(signinResult);
+        res.status(200).json({
+            message: "sign in successfully"
+        })
     } catch (error) {
         console.log(error);
         res.status(404).json({
-            error: error.message
+            message: "sign in failed"
         })
     }
 }
@@ -57,43 +51,38 @@ const loginUserController = async (req, res)=>{
 
         const { error } =loginSchema.validate(req.body)
         if(error){
-            res.status(400).json({
-                error: error.message
+            return res.status(400).json({
+                message: "re-enter credientials"
             })
         }
 
-        const {email, password}=req.body
+        const { email, password }=req.body
         const pool= await mssql.connect(sqlConfig)
-        await pool
-        .request()
-        .input('email', mssql.VarChar, email)
-        .input('password', mssql.VarChar, password)
-        .execute('loginUser')
+        let result = await ( await pool
+            .request()
+            .input('email', mssql.VarChar, email)
+            .execute('loginUser')
+            ).recordset[0]
 
+            console.log(result);
         //compares the sigin and login passwords
-        const {password: hashedPassword} =user
-        const validPassword = await bcrypt.compare(password, hashedPassword)
+        // const {password: hashedPassword} =user
+        const validPassword = await bcrypt.compare(password, result.password)
 
         if(!validPassword){
-            res.status(400).json({
+            return res.status(400).json({
                 message: 'wrong credentials'
             })
-        }
-
-
-        if (user.email=== email) {
-            return res.status(401).json({
-                message:('user already exists')
-            })
-        }else {
+        }else{
             return res.status(200).json({
-                message: ('user signed in sucessfully')
+                message: 'login success'
             })
         }
 
     } catch (error) {
+        console.log(error);
         res.status(404).json({
-            error: error.message
+            message: "user doesn't exist"
         })
     }
 }

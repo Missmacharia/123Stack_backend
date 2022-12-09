@@ -1,5 +1,6 @@
- create procedure signInuser(@email varchar(50))
+ create procedure signInuser(@id varchar(20), @username varchar(20), @email varchar(100), @password varchar(500))
  as 
  begin
- select *from users where email =@email
+ insert into users(id, username, email, password)
+ values( @id, @username, @email, @password)
  end
