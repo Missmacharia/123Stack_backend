@@ -5,10 +5,12 @@ const bcrypt= require('bcrypt')
 const signinSchema = require('../schemas/signinSchema')
 const { user } = require('../../config/index')
 const loginSchema = require('../schemas/loginSchema')
+const jwt =require('jsonwebtoken')
 
 const signInController= async (req, res)=>{
     try {
         //get the body from the schemas
+        //if they haven't followed an appropriate order
         const { error } =signinSchema.validate(req.body) 
         if(error){
             return res.status(400).json({
@@ -33,9 +35,18 @@ const signInController= async (req, res)=>{
         .input('password', mssql.VarChar, password)
         .execute("signInuser")).rowsAffected
         console.log(signinResult);
-        res.status(200).json({
-            message: "sign in successfully"
-        })
+
+        //creating a token for the user
+        const token= await jwt.sign({id, email}, "SECRET", {
+            expiresIn: "18hrs"
+        });
+
+        res.status(201).send({
+            user: {id, username, email}, token })
+
+        // res.status(200).json({
+        //     message: "sign in successfully"
+        // })
     } catch (error) {
         console.log(error);
         res.status(404).json({
@@ -62,32 +73,65 @@ const loginUserController = async (req, res)=>{
             .request()
             .input('email', mssql.VarChar, email)
             .execute('loginUser')
-            ).recordset[0]
+            ).recordsets
 
             console.log(result);
         //compares the sigin and login passwords
-        // const {password: hashedPassword} =user
+       
         const validPassword = await bcrypt.compare(password, result.password)
-
+        
         if(!validPassword){
             return res.status(400).json({
                 message: 'wrong credentials'
             })
-        }else{
-            return res.status(200).json({
-                message: 'login success'
-            })
         }
+       
+        //verifying the tokens
+        const token = await jwt.verify({
+            id: user.id, email: user.email },
+             "SECRET",
+              { expiresIn: "18hrs" }
+         )
 
+        res.status(200).json({
+            user: { id: user.id, username: user.username, email: user.email },
+            token
+        })
+        
     } catch (error) {
         console.log(error);
         res.status(404).json({
-            message: "user doesn't exist"
+            message: "login failed"
         })
+    }
+}
+
+const userById= async (req, res)=>{
+    try {
+        let {id}= req.user 
+        const pool = await mssql.connect(sqlConfig)
+        let user = await (await pool
+            .input('id', mssql.VarChar, id)
+            ).recordsets
+       if(user.length <=0){
+        return res.status(404).send({message: "failed to identity user"})
+       }
+
+       const token= jwt.sign(
+        { id: user.id, email: user.email }, "SECRET",
+        {expiresIn : "18hrs"}
+       )
+       res.send({
+        user: {id: user.id, name: user.name, email: user.email}, 
+        token
+       })
+    } catch (error) {
+        res.status(500).send({message: "failed to process request please try again"})
     }
 }
 
 module.exports= {
     signInController,
-    loginUserController
+    loginUserController,
+    userById
 }
