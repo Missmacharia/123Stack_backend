@@ -3,8 +3,8 @@ const jwt = require('jsonwebtoken')
 const auth= (req, res, next)=>{
     try {
         //request the token from the headers
-        const bearer = req.header['authorization']
-
+        const bearer = req.headers['authorization']
+        console.log(bearer);
         if(!bearer) {
             return res.status(401).send({message: "Access denied"})
         }
@@ -19,6 +19,7 @@ const auth= (req, res, next)=>{
         next()
 
     } catch (error) {
+        console.log(error);
        res.status(401).send({message: "Access denied"}) 
     }
 }

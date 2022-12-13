@@ -8,11 +8,14 @@ const answersroute =require('./stackQuestions/Routes/answers')
 const questionsroutes= require('./stackQuestions/Routes/questions')
 const commentsroutes= require('./stackQuestions/Routes/comments')
 const usersroutes= require('./auth-api/routes/auth.userRoutes')
+const emailroutes= require('./email_api/routes/emailRoute')
 
 dotenv.config()
 
 app.use(express.json())
 app.use(cors())
+
+app.use('/api/email', emailroutes)
 
 app.use('/users', usersroutes)
 

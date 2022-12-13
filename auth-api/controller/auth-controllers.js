@@ -25,7 +25,7 @@ const signInController= async (req, res)=>{
         const id = userId()
         //generates a salt
         const salt = await bcrypt.genSalt(10)
-        const password=await bcrypt.hash( req.body.password,salt)
+        const password=await bcrypt.hash( req.body.password, salt)
         // const password = await bcrypt.hash(req.body.password, 10)
         let signinResult = await (await pool
        .request()
@@ -36,17 +36,9 @@ const signInController= async (req, res)=>{
         .execute("signInuser")).rowsAffected
         console.log(signinResult);
 
-        //creating a token for the user
-        const token= await jwt.sign({id, email}, "SECRET", {
-            expiresIn: "18hrs"
-        });
-
-        res.status(201).send({
-            user: {id, username, email}, token })
-
-        // res.status(200).json({
-        //     message: "sign in successfully"
-        // })
+        res.status(200).json({
+            message: "sign in successfully"
+        })
     } catch (error) {
         console.log(error);
         res.status(404).json({
@@ -73,7 +65,7 @@ const loginUserController = async (req, res)=>{
             .request()
             .input('email', mssql.VarChar, email)
             .execute('loginUser')
-            ).recordsets
+            ).recordset[0]
 
             console.log(result);
         //compares the sigin and login passwords
@@ -85,18 +77,18 @@ const loginUserController = async (req, res)=>{
                 message: 'wrong credentials'
             })
         }
-       
-        //verifying the tokens
-        const token = await jwt.verify({
-            id: user.id, email: user.email },
-             "SECRET",
-              { expiresIn: "18hrs" }
-         )
 
-        res.status(200).json({
-            user: { id: user.id, username: user.username, email: user.email },
-            token
-        })
+
+        const {id,username} = result
+        //creating a token for the user
+        const token= await jwt.sign({id, email}, "SECRET", {
+            expiresIn: "18hrs"
+        });
+
+        res.status(201).send({
+            user: {id, username, email}, token })
+       
+   
         
     } catch (error) {
         console.log(error);
@@ -109,23 +101,21 @@ const loginUserController = async (req, res)=>{
 const userById= async (req, res)=>{
     try {
         let {id}= req.user 
+        console.log(id);
         const pool = await mssql.connect(sqlConfig)
         let user = await (await pool
+            .request()
             .input('id', mssql.VarChar, id)
-            ).recordsets
+            .execute("userById")
+            ).recordset[0]
        if(user.length <=0){
         return res.status(404).send({message: "failed to identity user"})
        }
-
-       const token= jwt.sign(
-        { id: user.id, email: user.email }, "SECRET",
-        {expiresIn : "18hrs"}
-       )
-       res.send({
-        user: {id: user.id, name: user.name, email: user.email}, 
-        token
+         res.status(200).send({
+        user: {id: user.id, user: user.username, email: user.email}
        })
     } catch (error) {
+    console.log(error);
         res.status(500).send({message: "failed to process request please try again"})
     }
 }

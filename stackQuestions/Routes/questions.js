@@ -6,7 +6,7 @@ const router= express.Router()
 
 router.get('/', getQuestions)
 router.get('/:id', getQuestion)
-router.post('/', auth, addQuestion)
+router.post('/', addQuestion)
 router.delete('/:id', deleteQuestion)
 
 
