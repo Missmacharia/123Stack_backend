@@ -1,13 +1,12 @@
 const express= require('express')
 const auth = require('../../auth-api/middleware/auth')
-const { getQuestions, getQuestion, addQuestion, deleteQuestion } = require('../controllers')
+const { getQuestions, getQuestion, addQuestion, searchQuestion, deleteQuestion } = require('../controllers')
 
 const router= express.Router()
 
-router.get('/', getQuestions)
+router.get('/search', searchQuestion)
+router.get('/questions', getQuestions)
 router.get('/:id', getQuestion)
-router.post('/', addQuestion)
-router.delete('/:id', deleteQuestion)
-
-
+router.post('/addQuiz', addQuestion)
+router.put('/deleteQuiz/:id', deleteQuestion)
 module.exports= router
