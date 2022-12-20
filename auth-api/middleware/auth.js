@@ -13,8 +13,9 @@ const auth= (req, res, next)=>{
         console.log(token);
 //verifyin the token
         const {id, email}= jwt.verify(token, "SECRET");
-
-        req.user = {id, email}
+       
+        
+        req.body = {...req.body,id, email}
 
         next()
 

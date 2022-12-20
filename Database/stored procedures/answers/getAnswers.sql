@@ -1,6 +1,6 @@
 --get answers procedures
-create procedure getAnswers
-as 
-begin
-select *from answers
-end
+ create or alter procedure getAnswers(@questionId varchar(30))
+ as 
+ begin
+ select *from answers where questionId=@questionId
+ end

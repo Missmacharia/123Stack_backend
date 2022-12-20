@@ -1,6 +1,6 @@
 --get comments procedures
-create procedure getComments
+create or alter procedure getComments(@answerId varchar(50))
 as
 begin
-select *from comments
+ select *from comments where answerId=@answerId
 end
