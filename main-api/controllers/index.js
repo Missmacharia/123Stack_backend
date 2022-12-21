@@ -102,14 +102,19 @@ const addQuestion = async (req, res) => {
 
 const searchQuestion = async (req, res) => {
   try {
-    const { question } = req.body;
+    const  question  = req.query.search;
+    console.log(question);
     const pool = await mssql.connect(sqlConfig);
-    const searchresult = await (
-      await pool
-        .request()
-        .input("question", mssql.VarChar, question)
-        .execute("searchQuestions")
+
+    const request = await pool.request();
+
+    if(question){
+      request.input("question", mssql.VarChar, question)
+    }
+
+    const searchresult = await (await request.execute("searchQuestions")
     ).recordset;
+
     res.status(200).json(
       searchresult,
     );
@@ -208,6 +213,7 @@ const addAnAnswer = async (req, res) => {
 const passVotes = async (req, res) => {
   try {
     const { id } = req.params;
+    const {upVote, downVote}= req.body
     const pool = await mssql.connect(sqlConfig);
     let passVoteResult = await (
       await pool
@@ -216,13 +222,14 @@ const passVotes = async (req, res) => {
         .input("upVote", mssql.Int, upVote)
         .input("downVote", mssql.Int, downVote)
         .execute("passVotes")
-    ).rowsAffected;
-    res.status(200).json({
+    ).recordset
+    res.status(200).json(
       passVoteResult,
-    });
+    );
   } catch (error) {
     res.status(500).json({
-      message: "unable to upvote/ downvote",
+      // message: "unable to upvote/ downvote"
+      message: error.message
     });
   }
 };

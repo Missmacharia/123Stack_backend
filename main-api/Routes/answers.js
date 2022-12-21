@@ -7,6 +7,6 @@ const router= express.Router()
 router.get('/', getAnswers)
 router.get('/:questionId', getQuestionAns)
 router.post('/addAns/:questionId',auth, addAnAnswer)
-router.put("/votes/:id",auth, passVotes)
+router.post("/votes/:id",auth, passVotes)
 
 module.exports = router
