@@ -74,6 +74,27 @@ const getQuestion = async (req, res) => {
   }
 };
 
+
+const getSingleUserQuestion= async(req, res)=>{
+  try {
+    const {userId}= req.params
+    const pool= await mssql.connect(sqlConfig)
+    let singleuserQuestion= await (await pool
+      .request()
+      .input("userId", mssql.VarChar, userId)
+      .execute('getAUsersQuestions')
+      ).recordset
+      res.status(200).json(
+        singleuserQuestion
+      )
+  } catch (error) {
+    res.status(500).json({
+      message: error.message
+    })
+  }
+}
+
+
 const addQuestion = async (req, res) => {
   try {
     const questionId = v4;
@@ -186,22 +207,21 @@ const addAnAnswer = async (req, res) => {
   try {
     const answerId = v4;
     const { questionId } = req.params;
-    const { id, answer, upVote, downVote } = req.body;
+    const { id, answer} = req.body;
     console.log(answer);
     const Qid = answerId();
     const pool = await mssql.connect(sqlConfig);
-    await pool
+    let answerShow= await (await pool
       .request()
       .input("id", mssql.VarChar, Qid)
       .input("userId", mssql.VarChar, id)
       .input("questionId", mssql.VarChar, questionId)
       .input("answer", mssql.VarChar, answer.answer)
-      .input("upVote", mssql.Int, upVote)
-      .input("downVote", mssql.Int, downVote)
-      .execute("addAnAnswer");
-    res.status(200).json({
-      message: "Answer added successfully",
-    });
+      .execute("addAnAnswer")).rowsAffected;
+      console.log(answerShow);
+    res.status(200).json(
+      answerShow
+    );
   } catch (error) {
     console.log(error);
     res.status(404).json({
@@ -209,50 +229,30 @@ const addAnAnswer = async (req, res) => {
     });
   }
 };
-
-const passVotes = async (req, res) => {
+const passVotes = async(req, res)=>{
   try {
-    const { id } = req.params;
-    const {upVote, downVote}= req.body
-    const pool = await mssql.connect(sqlConfig);
+    const {answerId, userId}= req.params
+    const {upVote= 1, downVote=0}= req.body
+    const pool = await mssql.connect(sqlConfig)
     let passVoteResult = await (
-      await pool
-        .request()
-        .input("id", mssql.VarChar, id)
-        .input("upVote", mssql.Int, upVote)
-        .input("downVote", mssql.Int, downVote)
-        .execute("passVotes")
+      await pool 
+      .request()
+      .input("userId", mssql.VarChar, userId)
+      .input("answerId", mssql.VarChar, answerId)
+      .input("upVote", mssql.VarChar, upVote)
+      .input("downVote", mssql.VarChar, downVote)
+      .execute("passvotes")
     ).recordset
     res.status(200).json(
-      passVoteResult,
-    );
+      passVoteResult
+    )
   } catch (error) {
-    res.status(500).json({
-      // message: "unable to upvote/ downvote"
-      message: error.message
-    });
+  res.status(500).json({
+    message: error.message
+  })
   }
-};
+}
 
-// const getComments = async (req, res)=>{
-//     try {
-//         const pool= await mssql.connect(sqlConfig)
-//         const response= await pool.request().execute('getComments')
-//         const comments= await response.recordset
-//         if(comments.length){
-//             return res.status(200).json(comments)
-//         } else{
-//             res.status(404).json({
-//                 message: 'no coments found'
-//             })
-//         }
-//     } catch (error) {
-//         console.log(error);
-//         res.status(404).json({
-//             error: error.message
-//         })
-//     }
-// }
 
 const getComments = async (req, res) => {
   try {
@@ -311,4 +311,5 @@ module.exports = {
   passVotes,
   getComments,
   addComment,
+  getSingleUserQuestion
 };

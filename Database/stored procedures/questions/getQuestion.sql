@@ -2,5 +2,5 @@
 create procedure getQuestion(@id varchar(20))
 as
 begin
-select *from questions where id=@id
+select *from questions where id=@id and isDelete = 0 
 end
